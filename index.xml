@@ -1,0 +1,633 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>唯米天空</title>
+    <link>http://localhost:1313/</link>
+    <description>Recent content on 唯米天空</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>utf8</language>
+    <lastBuildDate>Wed, 28 Oct 2015 22:28:51 +0800</lastBuildDate>
+    <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>关于唯米天空</title>
+      <link>http://localhost:1313/about/</link>
+      <pubDate>Wed, 28 Oct 2015 22:28:51 +0800</pubDate>
+      
+      <guid>http://localhost:1313/about/</guid>
+      <description>&lt;p&gt;Coder&lt;/p&gt;
+
+&lt;p&gt;微信公众账号：唯米天空&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Spring MVC 表单上传应用</title>
+      <link>http://localhost:1313/post/spring_validation/</link>
+      <pubDate>Wed, 28 Oct 2015 22:28:14 +0800</pubDate>
+      
+      <guid>http://localhost:1313/post/spring_validation/</guid>
+      <description>
+
+&lt;p&gt;《&lt;a href=&#34;http://www.cnblogs.com/vimisky/p/4860866.html&#34;&gt;Spring 验证、数据绑定和类型转换&lt;/a&gt;》那篇Spring官方Doc文档的翻译并没有涉及具体使用的细节，本篇结合Spring MVC表单数据上传这个通用应用场景写一下笔者的实践。&lt;/p&gt;
+
+&lt;p&gt;（转载请注明出处，谢谢）&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;POST方式新增业务模型类，Spring MVC通过 @ModelAttribute 注解绑定接收参数，使用Spring Validator方式验证。&lt;/li&gt;
+&lt;li&gt;PUT方式更新业务模型类，Spring MVC通过 @ModelAttribute 注解绑定接收参数，使用Spring Validator方式验证。&lt;/li&gt;
+&lt;li&gt;PATCH方式更新业务模型类，Spring MVC通过 @ModelAttribute 注解绑定接收参数，使用Spring Validator方式验证。&lt;/li&gt;
+&lt;li&gt;GET/POST name/value/pk参数更新业务模型类，Spring MVC 接收基本类型参数，使用JSR 303 API手动验证。&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&#34;写在前面:89bb4c5b4f72a5c8ef3144f78db21b77&#34;&gt;写在前面&lt;/h3&gt;
+
+&lt;h4 id=&#34;spring中使用validation的两种方式:89bb4c5b4f72a5c8ef3144f78db21b77&#34;&gt;Spring中使用Validation的两种方式：&lt;/h4&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Bean Validation1.0/1.1 (JSR-303/JSR-349），官方文档请查阅&lt;a href=&#34;http://beanvalidation.org/1.0/spec/&#34;&gt;JSR303-spec&lt;/a&gt;，&lt;a href=&#34;http://docs.jboss.org/hibernate/beanvalidation/spec/1.0/api/&#34;&gt;JSR303-Javadoc&lt;/a&gt;;&lt;a href=&#34;http://beanvalidation.org/1.1/spec/&#34;&gt;JSR349-spec&lt;/a&gt;，&lt;a href=&#34;http://docs.jboss.org/hibernate/beanvalidation/spec/1.1/api/&#34;&gt;JSR349-Javadoc&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Spring Validation&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;以上两个均不提供验证实现，Bean Validation默认实现由&lt;a href=&#34;http://hibernate.org/validator/&#34;&gt;Hibernate Validation&lt;/a&gt;(官方文档请查阅&lt;a href=&#34;http://hibernate.org/validator/documentation/&#34;&gt;Hibernate Validation - Reference&lt;/a&gt;)提供。&lt;/p&gt;
+
+&lt;h4 id=&#34;bean-validation内嵌约束:89bb4c5b4f72a5c8ef3144f78db21b77&#34;&gt;Bean Validation内嵌约束&lt;/h4&gt;
+
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;&lt;strong&gt;注解&lt;/strong&gt;&lt;/th&gt;
+&lt;th&gt;&lt;strong&gt;支持的数据类型&lt;/strong&gt;&lt;/th&gt;
+&lt;th&gt;&lt;strong&gt;说明&lt;/strong&gt;&lt;/th&gt;
+&lt;th&gt;&lt;strong&gt;版本&lt;/strong&gt;&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;@AssertFalse&lt;/td&gt;
+&lt;td&gt;Boolean, boolean&lt;/td&gt;
+&lt;td&gt;检查被注解的元素是否为false&lt;/td&gt;
+&lt;td&gt;1.0&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;@AssertTrue&lt;/td&gt;
+&lt;td&gt;Boolean, boolean&lt;/td&gt;
+&lt;td&gt;检查被注解的元素是否为true&lt;/td&gt;
+&lt;td&gt;1.0&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;@DecimalMax&lt;/td&gt;
+&lt;td&gt;BigDecimal, BigInteger, String, byte, short, int, long及封装对象，Number and CharSequence的子类型.&lt;/td&gt;
+&lt;td&gt;检查被注解的元素是否为数字，且小于等于注解内的值&lt;/td&gt;
+&lt;td&gt;1.0&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;@DecimalMin&lt;/td&gt;
+&lt;td&gt;BigDecimal, BigInteger, String, byte, short, int, long及封装对象，Number and CharSequence的子类型.&lt;/td&gt;
+&lt;td&gt;检查被注解的元素是否为数字，且大于等于注解内的值&lt;/td&gt;
+&lt;td&gt;1.0&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;@Digits(integer=, fraction=)&lt;/td&gt;
+&lt;td&gt;BigDecimal, BigInteger, String, byte, short, int, long及封装对象，Number and CharSequence的子类型.&lt;/td&gt;
+&lt;td&gt;检查被注解的元素是否为数字，且符合要求范围，integer参数表示整数位数，fraction表示小数位数.&lt;/td&gt;
+&lt;td&gt;1.0&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;@Future&lt;/td&gt;
+&lt;td&gt;java.util.Date, java.util.Calendar， ReadablePartial和ReadableInstant的实现类；如果classpath中有joda time库，支持；&lt;/td&gt;
+&lt;td&gt;检查被注解的时间是否是将来时间&lt;/td&gt;
+&lt;td&gt;1.0&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;@Max&lt;/td&gt;
+&lt;td&gt;BigDecimal, BigInteger, String, byte, short, int, long及封装对象，Number and CharSequence的子类型.&lt;/td&gt;
+&lt;td&gt;检查被注解的元素是否小于等于注解内的值&lt;/td&gt;
+&lt;td&gt;1.0&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;@Min&lt;/td&gt;
+&lt;td&gt;BigDecimal, BigInteger, String, byte, short, int, long及封装对象，Number and CharSequence的子类型.&lt;/td&gt;
+&lt;td&gt;检查被注解的元素是否大于等于注解内的值&lt;/td&gt;
+&lt;td&gt;1.0&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;@NotNull&lt;/td&gt;
+&lt;td&gt;任何类型&lt;/td&gt;
+&lt;td&gt;检查被注解的元素是否不为null&lt;/td&gt;
+&lt;td&gt;1.0&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;@Null&lt;/td&gt;
+&lt;td&gt;任何类型&lt;/td&gt;
+&lt;td&gt;检查被注解的元素是否为null&lt;/td&gt;
+&lt;td&gt;1.0&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;@Past&lt;/td&gt;
+&lt;td&gt;java.util.Date, java.util.Calendar， ReadablePartial和ReadableInstant的实现类；如果classpath中有joda time库，支持；&lt;/td&gt;
+&lt;td&gt;检查被注解的时间是否是过去时间&lt;/td&gt;
+&lt;td&gt;1.0&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;@Pattern(regex=, flag=)&lt;/td&gt;
+&lt;td&gt;String， CharSequence的子类型.&lt;/td&gt;
+&lt;td&gt;检查被注解的元素是否符合正则表达式&lt;/td&gt;
+&lt;td&gt;1.0&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;@Size(min=, max=)&lt;/td&gt;
+&lt;td&gt;String, Collection, Map， arrays以及CharSequence的子类型.&lt;/td&gt;
+&lt;td&gt;检查被注解元素的Size是否在min和max范围内&lt;/td&gt;
+&lt;td&gt;1.0&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;
+&lt;td&gt;@Valid&lt;/td&gt;
+&lt;td&gt;任意非基本类型&lt;/td&gt;
+&lt;td&gt;对被注解元素对象执行验证。如果对象是集合类collection或者array，对集合类中的元素进行逐一验证。如果对象是map，则对value进行验证&lt;/td&gt;
+&lt;td&gt;1.0&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h4 id=&#34;bean-validation约束保留属性:89bb4c5b4f72a5c8ef3144f78db21b77&#34;&gt;Bean Validation约束保留属性&lt;/h4&gt;
+
+&lt;ul&gt;
+&lt;li&gt;groups，用于分组验证，支持同一个待验证对象在不同验证场景下的不同验证规则&lt;/li&gt;
+&lt;li&gt;message，验证错误后的提示信息&lt;/li&gt;
+&lt;li&gt;payload，验证负载&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;版本兼容性:89bb4c5b4f72a5c8ef3144f78db21b77&#34;&gt;版本兼容性&lt;/h4&gt;
+
+&lt;ul&gt;
+&lt;li&gt;JDK1.6、Spring 3、JSR-303、Hibernate Validaiton 4&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;尽量匹配，笔者使用Spring 3.2.4 + Hibernate Validation 5.1.3.Final，报错，回退为Hibernate Validation 4.2.0.Final，正常。&lt;/p&gt;
+
+&lt;p&gt;本篇主要使用JSR-303。&lt;/p&gt;
+
+&lt;h3 id=&#34;spring环境配置:89bb4c5b4f72a5c8ef3144f78db21b77&#34;&gt;Spring环境配置&lt;/h3&gt;
+
+&lt;p&gt;在Spring MVC配置文件中注入validator，在validator中注入全局验证器和验证消息类。
+局部validator在具体Controller类的DataBinder中添加即可。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;lt;!-- 打开Spring MVC注解驱动 --&amp;gt;
+&amp;lt;mvc:annotation-driven validator=&amp;quot;validator&amp;quot; /&amp;gt;
+&amp;lt;bean id=&amp;quot;messageSource&amp;quot; class=&amp;quot;org.springframework.context.support.ReloadableResourceBundleMessageSource&amp;quot;&amp;gt;
+    &amp;lt;property name=&amp;quot;basenames&amp;quot;&amp;gt;
+        &amp;lt;list&amp;gt;              
+            &amp;lt;!--对应classpath下的messages文件夹下的messages.properties和messages_zh_CN.properties以及其它国际化文件--&amp;gt;
+            &amp;lt;!--如果有多个消息国际化文件，在下面添加即可，value不需要添加文件扩展名--&amp;gt;
+            &amp;lt;value&amp;gt;classpath:messages/messages&amp;lt;/value&amp;gt;
+            &amp;lt;value&amp;gt;classpath:org/hibernate/validator/ValidationMessages&amp;lt;/value&amp;gt;
+        &amp;lt;/list&amp;gt;
+    &amp;lt;/property&amp;gt;
+    &amp;lt;!-- 默认值为none, 使用java.utils.properties --&amp;gt;
+    &amp;lt;property name=&amp;quot;defaultEncoding&amp;quot; value=&amp;quot;UTF-8&amp;quot; /&amp;gt;
+    &amp;lt;!-- 默认值为-1, 缓存永远不刷新 --&amp;gt;
+    &amp;lt;property name=&amp;quot;cacheSeconds&amp;quot; value=&amp;quot;60&amp;quot; /&amp;gt;
+    &amp;lt;!-- 父类AbstractMessageSource该属性默认值为false --&amp;gt;
+    &amp;lt;!-- 
+    &amp;lt;property name=&amp;quot;useCodeAsDefaultMessage&amp;quot; value=&amp;quot;false&amp;quot; /&amp;gt;
+     --&amp;gt;
+&amp;lt;/bean&amp;gt;
+&amp;lt;!-- mvc:annotation-driven默认会注入该类，但是如果需要定制，显式注入--&amp;gt;
+&amp;lt;bean id=&amp;quot;validator&amp;quot; class=&amp;quot;org.springframework.validation.beanvalidation.LocalValidatorFactoryBean&amp;quot;&amp;gt;
+    &amp;lt;!-- 指定自定义的Spring MessageSource对象，用来解析验证消息，替换JSR-303默认的classpath根路径下的ValidationMessages.properties文件--&amp;gt;
+    &amp;lt;property name=&amp;quot;validationMessageSource&amp;quot; ref=&amp;quot;messageSource&amp;quot; /&amp;gt;
+    &amp;lt;!-- 指定Validation实现类，若不指定，JSR-303按照默认机制查找，即在classpath中查找 --&amp;gt;
+    &amp;lt;!-- 注意，这里并没有使用ref， 因为参数是类名称，而不是对象--&amp;gt;
+    &amp;lt;property name=&amp;quot;providerClass&amp;quot; value=&amp;quot;org.hibernate.validator.HibernateValidator&amp;quot; /&amp;gt;
+&amp;lt;/bean&amp;gt;    
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;待验证的javabean:89bb4c5b4f72a5c8ef3144f78db21b77&#34;&gt;待验证的JavaBean&lt;/h3&gt;
+
+&lt;h4 id=&#34;java-bean-validation规范中-有3类验证注解:89bb4c5b4f72a5c8ef3144f78db21b77&#34;&gt;Java Bean Validation规范中，有3类验证注解。&lt;/h4&gt;
+
+&lt;ul&gt;
+&lt;li&gt;对象注解，注解在类定义上，值为对象验证器。&lt;/li&gt;
+&lt;li&gt;字段/属性注解，可以注解在字段上，也可以注解在getter方法上。&lt;/li&gt;
+&lt;li&gt;图注解，笔者认为可以理解为级联注解，待验证类中不止包含基本类型（String、Integer等）属性，还包含类类型。使用级联注解来对验证进行解耦，验证只在本级执行，对象属性的验证交给对象自己的验证规则执行。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;本篇使用Field注解。&lt;/p&gt;
+
+&lt;h4 id=&#34;分组验证:89bb4c5b4f72a5c8ef3144f78db21b77&#34;&gt;分组验证&lt;/h4&gt;
+
+&lt;p&gt;使用约束的groups参数，类型为数组，数组中的元素类型为Class&lt;/p&gt;
+
+&lt;h4 id=&#34;验证消息:89bb4c5b4f72a5c8ef3144f78db21b77&#34;&gt;验证消息&lt;/h4&gt;
+
+&lt;p&gt;本篇使用的是Spring 的 LocalValidationFactoryBean对象，在该对象中注入了messageSource对象，使用国际化文件来根据用户Locale显示不同语种的消息。&lt;/p&gt;
+
+&lt;p&gt;注入的实现MessageSource接口的具体类为org.springframework.context.support.ReloadableResourceBundleMessageSource，相比于org.springframework.context.support.ResourceBundleMessageSource，可以设置刷新时间，在指定时间过期后，重新载入message配置文件，及时更新message字符串所代表的实际文本。&lt;/p&gt;
+
+&lt;p&gt;为message属性赋值国际化文件中的字符串，加入了EL表达式。在J2EE classpath中要求javax.el包。&lt;/p&gt;
+
+&lt;h4 id=&#34;类定义:89bb4c5b4f72a5c8ef3144f78db21b77&#34;&gt;类定义&lt;/h4&gt;
+
+&lt;pre&gt;&lt;code&gt;public class CategoryTypeDetail {
+    @NotNull(groups={UpdateEntity.class},message=&amp;quot;{com.vimisky.dms.backend.restful.id.notnullerror}&amp;quot;)
+    @Min(groups={UpdateEntity.class,PatchEntity.class},value=1,message=&amp;quot;{com.vimisky.dms.backend.restful.id.minerror}&amp;quot;)
+    @Max(groups={UpdateEntity.class,PatchEntity.class},value=10000000,message=&amp;quot;{com.vimisky.dms.backend.restful.id.maxerror}&amp;quot;)//本处验证不严谨
+    private int id;
+
+    @NotNull(groups={NewEntity.class}, message=&amp;quot;{com.vimisky.dms.backend.restful.name.notnullerror}&amp;quot;)
+    @Size(groups={NewEntity.class,UpdateEntity.class,PatchEntity.class},min=1,max=255,message=&amp;quot;{com.vimisky.dms.backend.restful.name.lengtherror}&amp;quot;)
+    private String name;
+    @Size(groups={NewEntity.class,UpdateEntity.class,PatchEntity.class},min=0,max=255,message=&amp;quot;{com.vimisky.dms.backend.restful.secondaryname.lengtherror}&amp;quot;)
+    private String secondaryName;
+    //如果没有定义分组，而在应用validated时，指定了分组，则不会使用该条验证约束
+    @Size(groups={NewEntity.class,UpdateEntity.class,PatchEntity.class},min=0,max=1024,message=&amp;quot;{com.vimisky.dms.backend.restful.description.lengtherror}&amp;quot;)
+    private String description;
+
+    @Size(groups={NewEntity.class,UpdateEntity.class,PatchEntity.class},min=0,max=255,message=&amp;quot;{com.vimisky.dms.backend.restful.language.lengtherror}&amp;quot;)
+    private String language;
+    @Size(groups={NewEntity.class,UpdateEntity.class,PatchEntity.class},min=0,max=255,message=&amp;quot;{com.vimisky.dms.backend.restful.thumbnailurl.lengtherror}&amp;quot;)
+    private String thumbnailUrl;
+
+    //如果没有注释不能为空，则为空时，不检验Size等
+    @Size(groups={NewEntity.class,UpdateEntity.class,PatchEntity.class},min=1,max=255,message=&amp;quot;{com.vimisky.dms.backend.restful.thumbnailuri.lengtherror}&amp;quot;)
+    private String thumbnailUri;
+
+    @Size(groups={NewEntity.class,UpdateEntity.class,PatchEntity.class},min=0,max=255,message=&amp;quot;{com.vimisky.dms.backend.restful.thumbnailicon.lengtherror}&amp;quot;)
+    private String thumbnailIcon;
+
+    @Size(groups={NewEntity.class,UpdateEntity.class,PatchEntity.class},min=0,max=255,message=&amp;quot;{com.vimisky.dms.backend.restful.code.lengtherror}&amp;quot;)
+    private String code;
+
+    @Null(groups={NewEntity.class,UpdateEntity.class,PatchEntity.class}, message=&amp;quot;{com.vimisky.dms.backend.restful.createtime.nullerror}&amp;quot;)
+    private Date createTime;
+
+    @Null(groups={NewEntity.class,UpdateEntity.class,PatchEntity.class},message=&amp;quot;{com.vimisky.dms.backend.restful.lastmodifytime.nullerror}&amp;quot;)
+    private Date lastModifyTime;
+
+    public CategoryTypeDetail(){
+        super();
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getSecondaryName() {
+        return secondaryName;
+    }
+
+    public void setSecondaryName(String secondaryName) {
+        this.secondaryName = secondaryName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
+    public String getThumbnailUrl() {
+        return thumbnailUrl;
+    }
+
+    public void setThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
+    }
+
+    public String getThumbnailUri() {
+        return thumbnailUri;
+    }
+
+    public void setThumbnailUri(String thumbnailUri) {
+        this.thumbnailUri = thumbnailUri;
+    }
+
+    public String getThumbnailIcon() {
+        return thumbnailIcon;
+    }
+
+    public void setThumbnailIcon(String thumbnailIcon) {
+        this.thumbnailIcon = thumbnailIcon;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+    @JsonFormat(pattern = &amp;quot;yyyy-MM-dd HH:mm:ss&amp;quot;)
+    public Date getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
+    @JsonFormat(pattern = &amp;quot;yyyy-MM-dd HH:mm:ss&amp;quot;)
+    public Date getLastModifyTime() {
+        return lastModifyTime;
+    }
+
+    public void setLastModifyTime(Date lastModifyTime) {
+        this.lastModifyTime = lastModifyTime;
+    }
+
+    @Override
+    public String toString() {
+        return &amp;quot;CategoryTypeDetail [id=&amp;quot; + id + &amp;quot;, name=&amp;quot; + name
+                + &amp;quot;, secondaryName=&amp;quot; + secondaryName + &amp;quot;, description=&amp;quot;
+                + description + &amp;quot;, language=&amp;quot; + language + &amp;quot;, thumbnailUrl=&amp;quot;
+                + thumbnailUrl + &amp;quot;, thumbnailUri=&amp;quot; + thumbnailUri
+                + &amp;quot;, thumbnailIcon=&amp;quot; + thumbnailIcon + &amp;quot;, code=&amp;quot; + code
+                + &amp;quot;, createTime=&amp;quot; + createTime + &amp;quot;, lastModifyTime=&amp;quot;
+                + lastModifyTime + &amp;quot;]&amp;quot;;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;为支持分组验证，新建三个接口&lt;/p&gt;
+
+&lt;p&gt;新建&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;public interface NewEntity {
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;部分更新&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;public interface PatchEntity {
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;完全更新&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;public interface UpdateEntity {
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;post-modelattribute:89bb4c5b4f72a5c8ef3144f78db21b77&#34;&gt;POST+ModelAttribute&lt;/h3&gt;
+
+&lt;p&gt;Spring MVC使用WebDataBinder类来管理属性编辑器PropertyEditor和验证器validator等，用来进行数据绑定、数据类型转换和数据验证。如果需要在Spring MVC中增加局部验证器，可以通过webDataBinder.addValidator(&amp;hellip;)方法加入。本章中由于只使用Field/Property验证，Java Bean Validation即可满足，不需要另行新增类验证器。&lt;/p&gt;
+
+&lt;p&gt;使用Spring MVC的 @ModelAttribute 注解绑定表单数据到业务对象时，在前面增加验证注解 @Valid (Java Bean Validation 标准) 或者 @Validated (Spring 特有)。&lt;/p&gt;
+
+&lt;p&gt;本篇使用了分组验证，而 @Valid 没有分组验证的参数，只能使用 @Validated 。在业务对象参数后面，需要紧跟一个实现了Errors接口的对象。在Spring MVC中，BindingResult接口为Errors子接口，由Spring MVC注入具体实现对象。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;@RequestMapping(value=&amp;quot;/categorytype&amp;quot;, method=RequestMethod.POST)
+@ResponseBody
+public RestfulResult insertCategoryType(
+        @Validated(value={NewEntity.class}) @ModelAttribute CategoryTypeDetail categoryTypeDetail,
+        BindingResult bResult,
+        HttpServletRequest webRequest){
+    logger.debug(&amp;quot;接收到的分类类型数据为：&amp;quot;+categoryTypeDetail.toString());
+    //在客户端的Request头中，增加Content-Type:x-www-form-urlencoded;charset=utf8;这里就能获取到，否则获取不到
+    logger.debug(webRequest.getCharacterEncoding());
+    try {
+        webRequest.setCharacterEncoding(&amp;quot;&amp;quot;);
+    } catch (UnsupportedEncodingException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+    }
+    //补偿验证，避免用户上传ID
+    categoryTypeDetail.setId(0);
+    if(bResult.hasErrors()){
+        StringBuffer errorString = new StringBuffer();
+        logger.error(&amp;quot;分类类型数据新增接口接收表单数据出现错误：&amp;quot;);
+        //对前端而言，不需要显示全部错误
+        for (ObjectError objectError : bResult.getAllErrors()) {
+            logger.error(objectError.getObjectName()+&amp;quot;赋值验证出错：&amp;quot;+objectError.getDefaultMessage()+&amp;quot;，错误代码为:&amp;quot;+objectError.getCode());
+        }
+        for (FieldError fieldError : bResult.getFieldErrors()){
+            logger.error(fieldError.getObjectName()+&amp;quot;的&amp;quot;+fieldError.getField()+&amp;quot;字段赋值验证出错：&amp;quot;+fieldError.getDefaultMessage()+&amp;quot;，错误代码为:&amp;quot;+fieldError.getCode());               
+            errorString.append(fieldError.getDefaultMessage()+&amp;quot;\r\n&amp;quot;);
+        }
+        return new RestfulResult(false, &amp;quot;表单提交数据错误：&amp;quot;+errorString);
+    }
+    OperationServiceResult osr = this.backendCategoryService.insertCategoryType(categoryTypeDetail);
+    return new RestfulResult(osr);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;put-modelattribute:89bb4c5b4f72a5c8ef3144f78db21b77&#34;&gt;PUT+ModelAttribute&lt;/h3&gt;
+
+&lt;p&gt;为支持Method 为PUT的HTTP Request，需要增加一个响应Method 为OPTIONS的接口。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;@RequestMapping(value=&amp;quot;/categorytype/{id}&amp;quot;, method=RequestMethod.OPTIONS)
+@ResponseBody
+public RestfulResult updateCategoryTypeOPTIONS(@PathVariable int id){
+    logger.info(&amp;quot;响应HTTP OPTIONS Method&amp;quot;);       
+    return new RestfulResult(true);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;另外，需要增加一个拦截器，修改HTTP Response报头，Accept-Method中增加PUT。（超出本篇范围，不再粘贴相关代码）&lt;/p&gt;
+
+&lt;p&gt;PUT更新的验证规则见上面“待验证的JavaBean”，groups里含有UpdateEntity.class的注解。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;@RequestMapping(value=&amp;quot;/categorytype/{ctid}&amp;quot;, method=RequestMethod.PUT)
+@ResponseBody
+public RestfulResult updateCategoryType(
+        @PathVariable int ctid, 
+        @Validated(value={UpdateEntity.class}) @ModelAttribute CategoryTypeDetail categoryTypeDetail, 
+        BindingResult bResult){
+    logger.info(&amp;quot;通过HTTP PUT方法对分类&amp;quot;+categoryTypeDetail.getName()+&amp;quot;进行全部升级&amp;quot;);
+    if(bResult.hasErrors()){
+        StringBuffer errorString = new StringBuffer();
+        logger.error(&amp;quot;分类类型数据更新接口接收表单数据出现错误：&amp;quot;);
+        //对前端而言，不需要显示全部错误
+        for (ObjectError objectError : bResult.getAllErrors()) {
+            logger.error(objectError.getObjectName()+&amp;quot;赋值验证出错：&amp;quot;+objectError.getDefaultMessage()+&amp;quot;，错误代码为:&amp;quot;+objectError.getCode());
+        }
+        for (FieldError fieldError : bResult.getFieldErrors()){
+            logger.error(fieldError.getObjectName()+&amp;quot;的&amp;quot;+fieldError.getField()+&amp;quot;字段赋值验证出错：&amp;quot;+fieldError.getDefaultMessage()+&amp;quot;，错误代码为:&amp;quot;+fieldError.getCode());               
+            errorString.append(fieldError.getDefaultMessage()+&amp;quot;\r\n&amp;quot;);
+        }
+        return new RestfulResult(false, &amp;quot;表单提交数据错误：&amp;quot;+errorString);
+    }       
+    //该判断补充验证框架中的值验证
+    if(categoryTypeDetail.getId() != ctid){
+        logger.warn(&amp;quot;URL资源ID与表单ID数据不一致&amp;quot;);
+        return new RestfulResult(false, &amp;quot;URL资源ID与表单ID数据不一致&amp;quot;);           
+    }
+    OperationServiceResult osr = this.backendCategoryService.updateCategoryType(categoryTypeDetail);
+    return new RestfulResult(osr);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;patch-modelattribute:89bb4c5b4f72a5c8ef3144f78db21b77&#34;&gt;PATCH+ModelAttribute&lt;/h3&gt;
+
+&lt;p&gt;为支持Method 为PATCH的HTTP Request，需要增加一个响应Method 为OPTIONS的接口。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;@RequestMapping(value=&amp;quot;/categorytype/{id}&amp;quot;, method=RequestMethod.OPTIONS)
+@ResponseBody
+public RestfulResult updateCategoryTypeOPTIONS(@PathVariable int id){
+    logger.info(&amp;quot;响应HTTP OPTIONS Method&amp;quot;);       
+    return new RestfulResult(true);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;另外，需要增加一个拦截器，修改HTTP Response报头，Accept-Method中增加PUT。（超出本篇范围，不再粘贴相关代码）&lt;/p&gt;
+
+&lt;p&gt;PATCH更新的验证规则见上面“待验证的JavaBean”，groups里含有PatchEntity.class的注解。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;@RequestMapping(value=&amp;quot;/categorytype/{id}&amp;quot;, method=RequestMethod.PATCH)
+@ResponseBody
+public RestfulResult updateCategoryTypePart(
+        @PathVariable int id, 
+        @Validated(value={PatchEntity.class}) @ModelAttribute CategoryTypeDetail categoryTypeDetail,
+        BindingResult bResult){
+    logger.info(&amp;quot;通过HTTP PATCH方法对分类类型进行部分升级&amp;quot;);
+    logger.debug(&amp;quot;原始CategoryType为：&amp;quot;+categoryTypeDetail.toString());
+    if(bResult.hasErrors()){
+        StringBuffer errorString = new StringBuffer();
+        logger.error(&amp;quot;分类类型部分数据更新接口接收表单数据出现错误：&amp;quot;);
+        //对前端而言，不需要显示全部错误
+        for (ObjectError objectError : bResult.getAllErrors()) {
+            logger.error(objectError.getObjectName()+&amp;quot;赋值验证出错：&amp;quot;+objectError.getDefaultMessage()+&amp;quot;，错误代码为:&amp;quot;+objectError.getCode());
+        }
+        for (FieldError fieldError : bResult.getFieldErrors()){
+            logger.error(fieldError.getObjectName()+&amp;quot;的&amp;quot;+fieldError.getField()+&amp;quot;字段赋值验证出错：&amp;quot;+fieldError.getDefaultMessage()+&amp;quot;，错误代码为:&amp;quot;+fieldError.getCode());               
+            errorString.append(fieldError.getDefaultMessage()+&amp;quot;\r\n&amp;quot;);
+        }
+        return new RestfulResult(false, &amp;quot;表单提交数据错误：&amp;quot;+errorString);
+    }
+    //与完全更新不同，表单中无需提供ID，使用URL中的ID即可
+    if(categoryTypeDetail.getId() == 0)
+        categoryTypeDetail.setId(id);
+    OperationServiceResult osr = backendCategoryService.updateCategoryTypePart(categoryTypeDetail);
+    return new RestfulResult(osr);
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;get-post-name-value-pk:89bb4c5b4f72a5c8ef3144f78db21b77&#34;&gt;GET/POST + name/value/pk&lt;/h3&gt;
+
+&lt;p&gt;这种方式是为了适应更快速的更改单个属性，上传表单时，参数为属性名(name)，属性值(value)，主键ID(pk)。&lt;/p&gt;
+
+&lt;p&gt;首先通过Java反射机制，为实体类赋值，然后手动调用javax.validation.validator进行验证。这里选择java标准validator的原因是，Spring validator并未提供分组验证的参数。&lt;/p&gt;
+
+&lt;p&gt;Spring validator的API为 validator.validate(Object obj, Errors errors)，而java标准validator API为validator.validate(Object obj, Class&lt;T&gt; class)。&lt;/p&gt;
+
+&lt;p&gt;但是在注入validator时，使用Spring配置文件中的LocalValidatorFactoryBean即可。可以通过 @Autowired 注入，javax.validation.Validator validator；&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;@RequestMapping(value=&amp;quot;/categorytype/updatefield&amp;quot;, method=RequestMethod.POST, params={&amp;quot;name&amp;quot;,&amp;quot;value&amp;quot;,&amp;quot;pk&amp;quot;})
+@ResponseBody
+public RestfulResult updateCategoryTypeField(
+        @RequestParam(value=&amp;quot;name&amp;quot;, required = true) String name,
+        @RequestParam(value = &amp;quot;value&amp;quot;, required = true) String value,
+        @RequestParam(value = &amp;quot;pk&amp;quot;, required = true) int pk,
+        WebRequest webRequest){
+    //验证
+    try {
+        Class&amp;lt;CategoryTypeDetail&amp;gt; categoryTypeDetailClass =(Class&amp;lt;CategoryTypeDetail&amp;gt;) Class.forName(&amp;quot;com.vimisky.dms.entity.backend.CategoryTypeDetail&amp;quot;);
+        CategoryTypeDetail categoryTypeDetail = categoryTypeDetailClass.newInstance();
+        Field field = categoryTypeDetailClass.getDeclaredField(name);
+        field.setAccessible(true);
+        field.set(categoryTypeDetail, value);
+        categoryTypeDetail.setId(pk);
+
+        Set&amp;lt;javax.validation.ConstraintViolation&amp;lt;CategoryTypeDetail&amp;gt;&amp;gt; constraintViolations = validator.validate(categoryTypeDetail, PatchEntity.class);
+        if(constraintViolations.size()&amp;gt;0) {
+            Iterator&amp;lt;javax.validation.ConstraintViolation&amp;lt;CategoryTypeDetail&amp;gt;&amp;gt; iterator = constraintViolations.iterator();
+            StringBuffer errorString = new StringBuffer();
+            while(iterator.hasNext()){
+                javax.validation.ConstraintViolation&amp;lt;CategoryTypeDetail&amp;gt; constraintViolation = iterator.next();
+                logger.warn(constraintViolation.getMessage());
+                errorString.append(constraintViolation.getMessage());
+            }
+            return new RestfulResult(false, &amp;quot;表单提交数据错误：&amp;quot;+errorString);
+        }
+
+
+    } catch (ClassNotFoundException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+        return new RestfulResult(false,&amp;quot;服务器后台出错&amp;quot;);
+    } catch (InstantiationException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+        return new RestfulResult(false,&amp;quot;服务器后台出错&amp;quot;);
+    } catch (IllegalAccessException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+        return new RestfulResult(false,&amp;quot;服务器后台出错&amp;quot;);
+    } catch (SecurityException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+        return new RestfulResult(false,&amp;quot;服务器后台出错&amp;quot;);
+    } catch (NoSuchFieldException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+        return new RestfulResult(false,&amp;quot;服务器后台出错&amp;quot;);
+    }
+
+    OperationServiceResult osr = 
+    backendCategoryService.updateCategoryTypePart(pk, name, value);
+    return new RestfulResult(osr);
+
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;写在后面:89bb4c5b4f72a5c8ef3144f78db21b77&#34;&gt;写在后面&lt;/h3&gt;
+
+&lt;p&gt;源码中的RestfulResult类和OperationServiceResult类是为前端服务而自定义的类，比较简单，与具体实现的业务相关，与本文无关，所以不贴了。&lt;/p&gt;
+
+&lt;p&gt;关于Bean Validation自定义约束，在以后的博文中再单写。&lt;/p&gt;
+
+&lt;p&gt;关于Bean ValidationValidator接口自定义实现类，在以后的博文中再单写。可以在Spring MVC中通过给databinder添加validator的方式加入。&lt;/p&gt;
+
+&lt;p&gt;关于Bean Validation和Spring Validation的框架选择上，使用自己熟悉的就好，但是遇到的 @Valid 注解加不了分组，Spring validator validate方法手工验证加不了分组这两种情况，就只能使用另外一种了。&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>intro</title>
+      <link>http://localhost:1313/post/intro/</link>
+      <pubDate>Wed, 28 Oct 2015 22:28:14 +0800</pubDate>
+      
+      <guid>http://localhost:1313/post/intro/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>
